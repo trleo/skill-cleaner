@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skill-cleaner"
+version = "0.1.0"
+description = "Audit, deduplicate, and prune AI agent skills across Claude, Cursor, and Antigravity, with approval and quarantine."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "trleo"}]
+
+[tool.setuptools.packages.find]
+include = ["skill_cleaner*"]
