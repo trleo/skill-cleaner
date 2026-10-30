@@ -82,7 +82,7 @@ def _prune(args):
     if not skills:
         print("error: no skills found under the given roots", file=sys.stderr)
         return 2
-    attach_usage(skills, getattr(args, "history_glob", []) or [])
+    history_n = attach_usage(skills, getattr(args, "history_glob", []) or [])
     groups = find_duplicate_groups(skills)
     try:
         result = prune_skills(skills, groups, args.approve,
@@ -98,6 +98,20 @@ def _prune(args):
         print("Dry run — nothing moved. Add --apply to move these:")
         for skill_id in result["would_move"]:
             print(f"  - {skill_id}")
+    # The --out flag was previously parsed but ignored: prune wrote no
+    # report, unlike scan. Write the same report plus the prune outcome
+    # (a report failure must not mask a successful prune, so warn only).
+    report = build_report(skills, groups, history_n)
+    report["prune"] = {"applied": bool(args.apply),
+                       "moved": result["moved"],
+                       "would_move": result["would_move"]}
+    try:
+        write_report(report, args.out)
+    except OSError as exc:
+        print(f"warning: cannot write report to {args.out!r}: {exc}",
+              file=sys.stderr)
+    else:
+        print(f"Report: {args.out}/report.md, {args.out}/report.json")
     return 0
 
 
