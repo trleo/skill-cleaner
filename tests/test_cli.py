@@ -51,6 +51,26 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self.assertTrue(os.path.isdir(os.path.join(tmp, "claude", "a", "dup")))
 
+    def test_prune_writes_report_with_outcome(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            make_skill(tmp, "claude", "dup", "Short", subdir="a")
+            make_skill(tmp, "claude", "dup",
+                       "A much longer and more complete description",
+                       subdir="b")
+            approval = Path(tmp) / "approve.txt"
+            approval.write_text("claude/a/dup\n")
+            out = os.path.join(tmp, "report")
+            proc = run_cli("prune", "--root", os.path.join(tmp, "claude"),
+                           "--approve", str(approval),
+                           "--quarantine", os.path.join(tmp, "q"),
+                           "--out", out)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            data = json.loads((Path(out) / "report.json").read_text())
+            self.assertEqual(data["prune"]["applied"], False)
+            self.assertEqual(data["prune"]["would_move"], ["claude/a/dup"])
+            self.assertEqual(data["prune"]["moved"], [])
+            self.assertTrue((Path(out) / "report.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
